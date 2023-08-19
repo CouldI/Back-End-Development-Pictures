@@ -35,7 +35,7 @@ def count():
 ######################################################################
 @app.route("/picture", methods=["GET"])
 def get_pictures():
-    pass
+    return data
 
 ######################################################################
 # GET A PICTURE
@@ -44,7 +44,11 @@ def get_pictures():
 
 @app.route("/picture/<int:id>", methods=["GET"])
 def get_picture_by_id(id):
-    pass
+    result = next((item for item in data if item["id"] == id), None)
+    if result:
+        return result
+    else:
+        return {"error": "Picture not found"}, 404
 
 
 ######################################################################
@@ -52,7 +56,16 @@ def get_picture_by_id(id):
 ######################################################################
 @app.route("/picture", methods=["POST"])
 def create_picture():
-    pass
+    picture = request.get_json()
+    picture_id = picture.get('id')
+
+    for existing_picture in data:
+        if existing_picture['id'] == picture_id:
+            return jsonify({"Message": f"picture with id {picture_id} already present"}), 302
+    
+    data.append(picture)
+    return picture, 201
+
 
 ######################################################################
 # UPDATE A PICTURE
@@ -61,11 +74,35 @@ def create_picture():
 
 @app.route("/picture/<int:id>", methods=["PUT"])
 def update_picture(id):
-    pass
+    picture = request.get_json()
+    
+    updated = False
+    for existing_picture in data:
+        if existing_picture['id'] == id:
+            # 이미지 업데이트
+            existing_picture.update(picture)
+            updated = True
+            break
+
+    if updated:
+        return jsonify(existing_picture), 200
+    else:
+        return jsonify({"message": "picture not found"}), 404
 
 ######################################################################
 # DELETE A PICTURE
 ######################################################################
 @app.route("/picture/<int:id>", methods=["DELETE"])
 def delete_picture(id):
-    pass
+    deleted = False
+    for existing_picture in data:
+        if existing_picture['id'] == id:
+            # 이미지 삭제
+            data.remove(existing_picture)
+            deleted = True
+            break
+
+    if deleted:
+        return '', 204
+    else:
+        return jsonify({"message": "picture not found"}), 404
